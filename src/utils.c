@@ -15,7 +15,7 @@ int snprint_hex(char *dst, size_t size, const uint8_t *pbtData, const size_t szB
   size_t  szPos;
   size_t res = 0;
   for (szPos = 0; szPos < szBytes; szPos++) {
-    res += snprintf(dst + res, size - res, "%02x  ", pbtData[szPos]);
+    res += snprintf(dst + res, size - res, "%02x", pbtData[szPos]);
   }
   /* res += snprintf(dst + res, size - res, "\n"); */
   return res;
