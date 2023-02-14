@@ -25,32 +25,10 @@ int snprint_hex(char *dst, size_t size, const uint8_t *pbtData, const size_t szB
 void snprint_UID(char *dst, size_t size, const nfc_target *pnt)
 {
   if (NULL != pnt) {
-    switch (pnt->nm.nmt) {
-      case NMT_ISO14443A:
-	snprint_hex(dst,size,pnt->nti.nai.abtUid,pnt->nti.nai.szUidLen);
-        break;
-      case NMT_JEWEL:
-	log_warn("Unsupported RFID-Tag");
-        break;
-      case NMT_FELICA:
-	log_warn("Unsupported RFID-Tag");
-        break;
-      case NMT_ISO14443B:
-	log_warn("Unsupported RFID-Tag");
-        break;
-      case NMT_ISO14443BI:
-	log_warn("Unsupported RFID-Tag");
-        break;
-      case NMT_ISO14443B2SR:
-	log_warn("Unsupported RFID-Tag");
-        break;
-      case NMT_ISO14443B2CT:
-	log_warn("Unsupported RFID-Tag");
-        break;
-      case NMT_DEP:
-	log_warn("Unsupported RFID-Tag");
-        break;
-    }
+    if (pnt->nm.nmt == NMT_ISO14443A)
+        snprint_hex(dst,size,pnt->nti.nai.abtUid,pnt->nti.nai.szUidLen);
+    else
+        log_warn("Unsupported RFID-Tag");
   }
 }
 

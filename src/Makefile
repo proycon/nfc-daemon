@@ -1,11 +1,11 @@
-CC = "gcc"
+CC = gcc
 LIBS = -lnfc
 CFLAGS = -Wall -Wextra -Werror
-PROGNAME = "nfc-daemon"
+PROGNAME = nfc-daemon
 OBJ = nfc-daemon.o utils.o logger.o runner.o
 
 %.o: %.c $(DEPS)
-	$(CC) -o $@ $< $(CFLAGS)
+	$(CC) -c -o $@ $< $(CFLAGS)
 
 nfc-daemon: $(OBJ)
 	$(CC) -o $@ $^ $(LIBS) $(CFLAGS)
