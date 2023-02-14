@@ -58,26 +58,13 @@
 #include "runner.h"
 
 #define MAX_DEVICE_COUNT 16
+#define MAX_TARGET_COUNT 16
 
 static nfc_device *pnd = NULL;
 static nfc_context *context;
 
 /* define the loglevel */
 enum log_levels loglevel = error;
-
-#ifdef _RUNSCRIPT
-char runscript[] = _RUNSCRIPT;
-#endif
-#ifndef _RUNSCRIPT
-char runscript[] = "/usr/local/share/nfc-daemon/scripts/run_script";
-#endif
-
-#ifdef _ENDSCRIPT
-char endscript[] = _ENDSCRIPT;
-#endif
-#ifndef _ENDSCRIPT
-char endscript[] = "/usr/local/share/nfc-daemon/scripts/end_script";
-#endif
 
 
 static void stop_polling(int sig)
@@ -98,6 +85,7 @@ static void print_usage(const char *progname)
   printf("  -h\t\t print help screen\n");
   printf("  -t\t\t dry-run. no script-execution\n");
   printf("  -l [0-4]\t use loglevel\n");
+  printf("  -x [cmd]\t command to run, UID will be passed as first argument\n");
 }
 
 int main(int argc, char *argv[])
@@ -112,7 +100,10 @@ int main(int argc, char *argv[])
   /* Display libnfc version */
   const char *acLibnfcVersion = nfc_version();
 
-  while((option = getopt(argc, argv, "vhl:t")) != -1)
+  char * runscript = malloc(255);
+  strcpy(runscript, "");
+
+  while((option = getopt(argc, argv, "vhl:tx:")) != -1)
   {
 	switch(option)
 	{
@@ -123,10 +114,13 @@ int main(int argc, char *argv[])
 			print_usage(argv[0]);
 			exit(EXIT_FAILURE);
 			break;
+		case 'x':
+            strcpy(runscript, optarg);
+            break;
 		case 'l':
 			errno = 0;
 			int val = strtol(optarg,&endptr,10);
-			if ((errno == ERANGE && (val == LONG_MAX || val == LONG_MIN))
+			if ((errno == ERANGE)
 				|| (errno != 0 && val == 0)) {
 				fprintf(stderr,"invalid loglevel: %s\n",strerror(errno));
 				exit(EXIT_FAILURE);
@@ -147,21 +141,14 @@ int main(int argc, char *argv[])
 	}
   }
 
-  log_debug("runscript is %s", runscript);
+  if (strlen(runscript) == 0) {
+      log_debug("no runscript specified, doing dry run");
+      dry_run = true;
+  } else {
+      log_debug("runscript is %s", runscript);
+  }
   log_info("%s uses libnfc %s", argv[0], acLibnfcVersion);
 
-  const uint8_t uiPollNr = 255; /* endless poll */
-  const uint8_t uiPeriod = 2;
-  const nfc_modulation nmModulations[5] = {
-    { .nmt = NMT_ISO14443A, .nbr = NBR_106 },
-    { .nmt = NMT_ISO14443B, .nbr = NBR_106 },
-    { .nmt = NMT_FELICA, .nbr = NBR_212 },
-    { .nmt = NMT_FELICA, .nbr = NBR_424 },
-    { .nmt = NMT_JEWEL, .nbr = NBR_106 },
-  };
-  const size_t szModulations = 5;
-
-  nfc_target nt;
   int res = 0;
 
   nfc_init(&context);
@@ -170,6 +157,7 @@ int main(int argc, char *argv[])
     exit(EXIT_FAILURE);
   }
 
+  nfc_target ant[MAX_TARGET_COUNT];
   pnd = nfc_open(context, NULL);
 
   if (pnd == NULL) {
@@ -186,47 +174,27 @@ int main(int argc, char *argv[])
   }
 
   log_info("NFC reader: %s opened", nfc_device_get_name(pnd));
+  nfc_modulation nm;
+  char *uid = malloc(100);
   while(1)
   {
-  log_debug("NFC device will poll during %ld ms (%u pollings of %lu ms for %" PRIdPTR " modulations)", 
-	    (unsigned long) uiPollNr * szModulations * uiPeriod * 150, uiPollNr, (unsigned long) uiPeriod * 150, szModulations);
-  if ((res = nfc_initiator_poll_target(pnd, nmModulations, szModulations, uiPollNr, uiPeriod, &nt))  < 0) {
-    nfc_perror(pnd, "nfc_initiator_poll_target");
-    nfc_close(pnd);
-    nfc_exit(context);
-    exit(EXIT_FAILURE);
-  }
+      nm.nmt = NMT_ISO14443A;
+      nm.nbr = NBR_106;
+      // List ISO14443A targets
+      if ((res = nfc_initiator_list_passive_targets(pnd, nm, ant, MAX_TARGET_COUNT)) >= 0) {
+        int n;
+        if (verbose) {
+          printf("%d ISO14443A passive target(s) found%s\n", res, (res == 0) ? ".\n" : ":");
+        }
+        for (n = 0; n < res; n++) {
+          if (verbose) print_nfc_target(&ant[n], verbose);
+          snprint_UID(uid,100, &ant[n]);
+          printf("UID=%s\n",uid);
+          if(!dry_run) run_script(runscript,uid);
+        }
+      }
+   }
+   nfc_free(uid);
 
-  if (res > 0) {
-    if(verbose)
-    	print_nfc_target(&nt, verbose);
-
-    char *uid = malloc(100);
-    if(! *uid)
-    {
-	nfc_close(pnd);
-	nfc_exit(context);
-	exit(EXIT_FAILURE);
-    }
-    snprint_UID(uid,100, &nt);
-    log_info("UID: %s",uid);
-    if(!dry_run)
-    {
-	run_script(runscript,uid);
-    } 
-    nfc_free(uid);
-    log_info("Waiting for card removing...");
-    fflush(stdout);
-    while (0 == nfc_initiator_target_is_present(pnd, NULL)) {}
-    if(!dry_run)
-    {
-	end_script(endscript);
-    } 
-    log_info("done.");
-    log_info("Accepting new nfc-tag");
-  } else {
-    log_error("No target found.");
-  }
-  }
   exit(EXIT_SUCCESS);
 }
