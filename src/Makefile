@@ -3,10 +3,9 @@ LIBS = -lnfc
 CFLAGS = -Wall -Wextra -Werror
 PROGNAME = "nfc-daemon"
 OBJ = nfc-daemon.o utils.o logger.o runner.o
-SCRIPTMACRO = -D _RUNSCRIPT="\"$(PREFIX)/share/nfc-daemon/$(RUNSCRIPT)\"" -D _ENDSCRIPT="\"$(PREFIX)/share/nfc-daemon/$(ENDSCRIPT)\""
 
 %.o: %.c $(DEPS)
-	$(CC) -c $(SCRIPTMACRO) -o $@ $< $(CFLAGS)
+	$(CC) -o $@ $< $(CFLAGS)
 
 nfc-daemon: $(OBJ)
 	$(CC) -o $@ $^ $(LIBS) $(CFLAGS)

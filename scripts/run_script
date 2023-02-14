@@ -1,4 +1,4 @@
 #!/bin/bash
 
-echo -n "hello world: "
+echo -n "Tag UID: "
 echo $@

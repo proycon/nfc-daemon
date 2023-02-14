@@ -1,13 +1,14 @@
 # nfc-daemon
+
 nfc-daemon is a very simple event daemon that reads out the UID of nfc-tags and executes scripts.
-It is based on nfc-poll.c from libnfc.
+It is based on nfc-poll.c and nfc-list.c from libnfc.
 
 # Dependencies
 
 * libnfc 1.7.1
 * properly configured nfc-device
 
-On Raspberry Pi OS:
+On Raspberry Pi OS or debian/ubuntu:
 
 ```
 apt update && apt install libnfc-bin libnfc-dev
@@ -25,15 +26,6 @@ Install:
 sudo make install
 ```
 
-As a systemd-service:
-```
-# BEFORE: edit docs/nfc-daemon.service and change User to your needs
-sudo cp docs/nfc-daemon.service /etc/systemd/system/nfc-daemon.service
-sudo systemctl enable nfc-daemon.service
-sudo systemctl start nfc-daemon.service
-```
-
-
 # Configuration
 
 nfc-daemon can be executed with the following parameters:
@@ -44,11 +36,10 @@ usage: nfc-daemon [-v]
   -h		 print help screen
   -t		 dry-run. no script-execution
   -l [0-4]	 use loglevel
+  -x [cmd]   command/script to run
 ```
 
-Per default, nfc-daemon executes **/usr/local/share/nfc-daemon/run_script** 
-when a nfc-tag is hold to the reader and **/usr/local/share/nfc-daemon/end_script**
-on releasing the nfc-tag. 
+The UID will be appended to the script as argument.
 
 # Example
 
