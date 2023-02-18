@@ -190,6 +190,7 @@ int main(int argc, char *argv[])
           if (verbose) print_nfc_target(&ant[n], verbose);
           snprint_UID(uid,100, &ant[n]);
           printf("UID=%s\n",uid);
+          fflush(stdout);
           if(!dry_run) run_script(runscript,uid);
         }
       }
