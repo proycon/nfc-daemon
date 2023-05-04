@@ -193,6 +193,9 @@ int main(int argc, char *argv[])
           fflush(stdout);
           if(!dry_run) run_script(runscript,uid);
         }
+      } else {
+          printf("Error %d",res);
+          exit(EXIT_FAILURE);
       }
    }
    nfc_free(uid);
