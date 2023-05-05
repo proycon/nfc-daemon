@@ -72,10 +72,8 @@ static void stop_polling(int sig)
   (void) sig;
   if (pnd != NULL)
     nfc_abort_command(pnd);
-  else {
-    nfc_exit(context);
-    exit(EXIT_FAILURE);
-  }
+  nfc_exit(context);
+  exit(EXIT_FAILURE);
 }
 
 static void print_usage(const char *progname)
