@@ -14,7 +14,7 @@ nfc-daemon: $(OBJ)
 
 install: nfc-daemon
 	cp $(PROGNAME) $(PREFIX)/bin
-	chown root.root $(PREFIX)/bin/$(PROGNAME)
+	chown root:root $(PREFIX)/bin/$(PROGNAME)
 	chmod 755 $(PREFIX)/bin/$(PROGNAME)
 
 uninstall: install
